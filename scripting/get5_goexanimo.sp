@@ -419,3 +419,101 @@ public void Get5_OnDemoFinished(const char[] fileName) {
     LogDebug("Request sent");
   }
 }
+
+public void Get5_OnMapPicked(MatchTeam team, const char[] mapName) {
+  char teamString[64];
+  GetTeamString(team, teamString, sizeof(teamString));
+
+  char matchId[64];
+  Get5_GetMatchID(matchId, sizeof(matchId));
+
+  Handle req = CreateRequestGoexanimo(k_EHTTPMethodPOST, "veto/pick");
+  if (req != INVALID_HANDLE) {
+    AddStringParam(req, "matchId", matchId);
+    AddStringParam(req, "team", teamString);
+    AddStringParam(req, "mapName", mapName);
+    SteamWorks_SendHTTPRequest(req);
+
+    LogDebug("Request sent");
+  }
+}
+
+public void Get5_OnMapVetoed(MatchTeam team, const char[] mapName) {
+  char teamString[64];
+  GetTeamString(team, teamString, sizeof(teamString));
+
+  char matchId[64];
+  Get5_GetMatchID(matchId, sizeof(matchId));
+
+  Handle req = CreateRequestGoexanimo(k_EHTTPMethodPOST, "veto/veto");
+  if (req != INVALID_HANDLE) {
+    AddStringParam(req, "matchId", matchId);
+    AddStringParam(req, "team", teamString);
+    AddStringParam(req, "mapName", mapName);
+    SteamWorks_SendHTTPRequest(req);
+
+    LogDebug("Request sent");
+  }
+}
+
+public void Get5_OnSidePicked(MatchTeam team, const char[] mapName, int side) {
+  char teamString[64];
+  GetTeamString(team, teamString, sizeof(teamString));
+
+  char matchId[64];
+  Get5_GetMatchID(matchId, sizeof(matchId));
+
+  char sideString[4];
+  CSTeamString(side, sideString, sizeof(sideString));
+
+  Handle req = CreateRequestGoexanimo(k_EHTTPMethodPOST, "veto/side");
+  if (req != INVALID_HANDLE) {
+    AddStringParam(req, "matchId", matchId);
+    AddStringParam(req, "team", teamString);
+    AddStringParam(req, "mapName", mapName);
+    AddStringParam(req, "side", sideString);
+    SteamWorks_SendHTTPRequest(req);
+
+    LogDebug("Request sent");
+  }
+}
+
+public void Get5_OnEvent(const char[] paramsJsonString) {
+  JSON_Object obj = json_decode(paramsJsonString);
+  JSON_Object eventParams = obj.GetObject("params");
+  char eventName[64];
+  char stage[64];
+  char team[15];
+  char matchId[64];
+
+  obj.GetString("event", eventName, sizeof(eventName));
+  obj.GetString("matchid", matchId, sizeof(matchId));
+  
+  LogDebug("we got event name '%s' and matchId '%s' ", eventName, matchId);
+
+  if (StrEqual(eventName, "team_ready")) {
+    LogDebug("we got team ready event");
+    eventParams.GetString("stage", stage, sizeof(stage));
+    eventParams.GetString("team", team, sizeof(team));
+
+    Handle req = CreateRequestGoexanimo(k_EHTTPMethodPOST, "ready");
+    if (req != INVALID_HANDLE) {
+      AddStringParam(req, "team", team);
+      AddStringParam(req, "matchId", matchId);
+      AddStringParam(req, "stage", stage);
+      SteamWorks_SendHTTPRequest(req);
+      LogDebug("Request sent");
+    }
+  } else if (StrEqual(eventName, "team_unready")) {
+    LogDebug("we got team unready event");
+    eventParams.GetString("team", team, sizeof(team));
+    Handle req = CreateRequestGoexanimo(k_EHTTPMethodPOST, "unready");
+    if (req != INVALID_HANDLE) {
+      AddStringParam(req, "team", team);
+      AddStringParam(req, "matchId", matchId);
+      SteamWorks_SendHTTPRequest(req);
+      LogDebug("Request sent");
+    }
+  }
+}
+
